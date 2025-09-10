@@ -61,7 +61,7 @@ public class RudnikUIHandler {
         try {
             System.out.println("\n=== SVI RUDNICI ===");
             System.out.println(Rudnik.getFormattedHeader());
-            System.out.println("=" * 120);
+            System.out.println("=========================================");
 
             for (Rudnik rudnik : rudnikService.getAll()) {
                 System.out.println(rudnik);
@@ -80,7 +80,7 @@ public class RudnikUIHandler {
             if (rudnik != null) {
                 System.out.println("\n=== RUDNIK ===");
                 System.out.println(Rudnik.getFormattedHeader());
-                System.out.println("=" * 120);
+                System.out.println("==================================");
                 System.out.println(rudnik);
             } else {
                 System.out.println("Rudnik sa ID " + id + " nije pronađen!");

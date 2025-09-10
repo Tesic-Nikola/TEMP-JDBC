@@ -368,7 +368,7 @@ public class RudnikDAOImpl implements RudnikDAO {
         return results;
     }
 
-    // Complex query - outer join 4 tables, aggregation, filtering, grouping, sorting
+    // Complex query 1 - outer join 4 tables, aggregation, filtering, grouping, sorting
     @Override
     public List<RudnikStatsDTO> findComplexRudnikReport() throws SQLException {
         String query = "SELECT r.RudnikID, r.Naziv, r.Lokacija, " +
@@ -402,6 +402,60 @@ public class RudnikDAOImpl implements RudnikDAO {
                         resultSet.getDouble("prosecni_kapacitet"),
                         resultSet.getInt("ukupno_iskopa"),
                         resultSet.getInt("aktivnih_lokacija")
+                );
+                results.add(dto);
+            }
+        }
+
+        return results;
+    }
+
+    // Complex query 2 - join 3+ tables, advanced analysis with aggregation and filtering
+    @Override
+    public List<IskopAnalysisDTO> findIskopAnalysisWithWasteSites() throws SQLException {
+        String query = "SELECT i.IskopID, i.Naziv as naziv_iskopa, r.Naziv as naziv_rudnika, r.Lokacija, " +
+                "i.Povrsina, " +
+                "COUNT(j.JalovisteID) as ukupno_jalovista, " +
+                "COUNT(CASE WHEN j.Status = 'Aktivno' THEN j.JalovisteID END) as aktivna_jalovista, " +
+                "COUNT(rl.RadLokID) as ukupno_radnih_lokacija, " +
+                "COUNT(CASE WHEN rl.Status = 'Aktivna' THEN rl.RadLokID END) as aktivnih_lokacija, " +
+                "CASE WHEN i.Povrsina > 0 THEN CAST(COUNT(j.JalovisteID) AS DECIMAL) / i.Povrsina ELSE 0 END as jalovista_density, " +
+                "COALESCE((" +
+                "  SELECT j2.Tip_materijala " +
+                "  FROM Jaloviste j2 " +
+                "  WHERE j2.Iskop_IskopID = i.IskopID " +
+                "  GROUP BY j2.Tip_materijala " +
+                "  ORDER BY COUNT(*) DESC " +
+                "  LIMIT 1" +
+                "), 'N/A') as dominantni_tip_materijala " +
+                "FROM Iskop i " +
+                "INNER JOIN Rudnik r ON i.Rudnik_RudnikID = r.RudnikID " +
+                "LEFT OUTER JOIN Jaloviste j ON i.IskopID = j.Iskop_IskopID " +
+                "LEFT OUTER JOIN Radna_Lok rl ON i.IskopID = rl.Iskop_IskopID " +
+                "WHERE i.Povrsina >= 200 " +
+                "GROUP BY i.IskopID, i.Naziv, r.Naziv, r.Lokacija, i.Povrsina " +
+                "HAVING COUNT(j.JalovisteID) > 0 " +
+                "ORDER BY jalovista_density DESC, i.Povrsina DESC";
+
+        List<IskopAnalysisDTO> results = new ArrayList<>();
+
+        try (Connection connection = ConnectionUtil_HikariCP.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
+
+            while (resultSet.next()) {
+                IskopAnalysisDTO dto = new IskopAnalysisDTO(
+                        resultSet.getInt("IskopID"),
+                        resultSet.getString("naziv_iskopa"),
+                        resultSet.getString("naziv_rudnika"),
+                        resultSet.getString("Lokacija"),
+                        resultSet.getInt("Povrsina"),
+                        resultSet.getInt("ukupno_jalovista"),
+                        resultSet.getInt("aktivna_jalovista"),
+                        resultSet.getInt("ukupno_radnih_lokacija"),
+                        resultSet.getInt("aktivnih_lokacija"),
+                        resultSet.getDouble("jalovista_density"),
+                        resultSet.getString("dominantni_tip_materijala")
                 );
                 results.add(dto);
             }
