@@ -10,7 +10,6 @@ public class IskopAnalysisDTO {
     private int aktivnaJalovista;
     private int ukupnoRadnihLokacija;
     private int aktivnihLokacija;
-    private double jalovistaDensity; // jalovista per hectare
     private String dominantniTipMaterijala;
 
     public IskopAnalysisDTO() {
@@ -19,8 +18,7 @@ public class IskopAnalysisDTO {
 
     public IskopAnalysisDTO(int iskopID, String nazivIskopa, String nazivRudnika, String lokacijaRudnika,
                             int povrsinaHa, int ukupnoJalovista, int aktivnaJalovista,
-                            int ukupnoRadnihLokacija, int aktivnihLokacija,
-                            double jalovistaDensity, String dominantniTipMaterijala) {
+                            int ukupnoRadnihLokacija, int aktivnihLokacija, String dominantniTipMaterijala) {
         this.iskopID = iskopID;
         this.nazivIskopa = nazivIskopa;
         this.nazivRudnika = nazivRudnika;
@@ -30,7 +28,6 @@ public class IskopAnalysisDTO {
         this.aktivnaJalovista = aktivnaJalovista;
         this.ukupnoRadnihLokacija = ukupnoRadnihLokacija;
         this.aktivnihLokacija = aktivnihLokacija;
-        this.jalovistaDensity = jalovistaDensity;
         this.dominantniTipMaterijala = dominantniTipMaterijala;
     }
 
@@ -107,14 +104,6 @@ public class IskopAnalysisDTO {
         this.aktivnihLokacija = aktivnihLokacija;
     }
 
-    public double getJalovistaDensity() {
-        return jalovistaDensity;
-    }
-
-    public void setJalovistaDensity(double jalovistaDensity) {
-        this.jalovistaDensity = jalovistaDensity;
-    }
-
     public String getDominantniTipMaterijala() {
         return dominantniTipMaterijala;
     }
@@ -125,15 +114,14 @@ public class IskopAnalysisDTO {
 
     @Override
     public String toString() {
-        return String.format("%-4d %-25.25s %-18.18s %-12.12s %-8d %-8d %-8d %-8d %-8d %-8.3f %-20.20s",
+        return String.format("%-4d %-25.25s %-18.18s %-12.12s %-8d %-8d %-8d %-8d %-8d %-20.20s",
                 iskopID, nazivIskopa, nazivRudnika, lokacijaRudnika, povrsinaHa,
-                ukupnoJalovista, aktivnaJalovista, ukupnoRadnihLokacija, aktivnihLokacija,
-                jalovistaDensity, dominantniTipMaterijala);
+                ukupnoJalovista, aktivnaJalovista, ukupnoRadnihLokacija, aktivnihLokacija, dominantniTipMaterijala);
     }
 
     public static String getFormattedHeader() {
-        return String.format("%-4s %-25s %-18s %-12s %-8s %-8s %-8s %-8s %-8s %-8s %-20s",
+        return String.format("%-4s %-25s %-18s %-12s %-8s %-8s %-8s %-8s %-8s %-20s",
                 "ID", "NAZIV_ISKOPA", "RUDNIK", "LOKACIJA", "POV_HA", "UK_JAL", "AKT_JAL",
-                "UK_LOK", "AKT_LOK", "DENSITY", "DOMINANT_MATERIJAL");
+                "UK_LOK", "AKT_LOK", "DOMINANT_MATERIJAL");
     }
 }

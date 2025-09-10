@@ -212,7 +212,6 @@ public class ReportUIHandler {
             int totalActiveWasteSites = analysis.stream().mapToInt(IskopAnalysisDTO::getAktivnaJalovista).sum();
             int totalWorkLocations = analysis.stream().mapToInt(IskopAnalysisDTO::getUkupnoRadnihLokacija).sum();
             int totalActiveLocations = analysis.stream().mapToInt(IskopAnalysisDTO::getAktivnihLokacija).sum();
-            double avgDensity = analysis.stream().mapToDouble(IskopAnalysisDTO::getJalovistaDensity).average().orElse(0.0);
 
             System.out.println("\n=== SUMARNI PREGLED ANALIZA ===");
             System.out.printf("%-30s: %d ha%n", "Ukupna površina iskopa", totalArea);
@@ -222,13 +221,9 @@ public class ReportUIHandler {
                     totalWasteSites > 0 ? (totalActiveWasteSites * 100.0 / totalWasteSites) : 0);
             System.out.printf("%-30s: %d%n", "Ukupno radnih lokacija", totalWorkLocations);
             System.out.printf("%-30s: %d%n", "Aktivne radne lokacije", totalActiveLocations);
-            System.out.printf("%-30s: %.3f jalovišta/ha%n", "Prosečna gustina jalovišta", avgDensity);
 
             // Find extremes
             if (!analysis.isEmpty()) {
-                IskopAnalysisDTO maxDensity = analysis.stream()
-                        .max((a, b) -> Double.compare(a.getJalovistaDensity(), b.getJalovistaDensity()))
-                        .get();
                 IskopAnalysisDTO maxArea = analysis.stream()
                         .max((a, b) -> Integer.compare(a.getPovrsinaHa(), b.getPovrsinaHa()))
                         .get();
@@ -237,8 +232,6 @@ public class ReportUIHandler {
                         .get();
 
                 System.out.println("\n=== EKSTREMNI SLUČAJEVI ===");
-                System.out.printf("Najveća gustina jalovišta: %s (%.3f jalovišta/ha)%n",
-                        maxDensity.getNazivIskopa(), maxDensity.getJalovistaDensity());
                 System.out.printf("Najveća površina: %s (%d ha)%n",
                         maxArea.getNazivIskopa(), maxArea.getPovrsinaHa());
                 System.out.printf("Najviše jalovišta: %s (%d jalovišta)%n",

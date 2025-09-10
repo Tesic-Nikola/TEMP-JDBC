@@ -90,8 +90,8 @@ public class RudnikDAOImpl implements RudnikDAO {
                         resultSet.getString("Naziv"),
                         resultSet.getString("Lokacija"),
                         resultSet.getDate("Datum_osnivanja"),
-                        resultSet.getTimestamp("Pocetak_radnog_vremena"),
-                        resultSet.getTimestamp("Kraj_radnog_vremena")
+                        resultSet.getTime("Pocetak_radnog_vremena"),
+                        resultSet.getTime("Kraj_radnog_vremena")
                 );
                 rudnici.add(rudnik);
             }
@@ -139,8 +139,8 @@ public class RudnikDAOImpl implements RudnikDAO {
                             resultSet.getString("Naziv"),
                             resultSet.getString("Lokacija"),
                             resultSet.getDate("Datum_osnivanja"),
-                            resultSet.getTimestamp("Pocetak_radnog_vremena"),
-                            resultSet.getTimestamp("Kraj_radnog_vremena")
+                            resultSet.getTime("Pocetak_radnog_vremena"),
+                            resultSet.getTime("Kraj_radnog_vremena")
                     );
                     rudnici.add(rudnik);
                 }
@@ -167,8 +167,8 @@ public class RudnikDAOImpl implements RudnikDAO {
                             resultSet.getString("Naziv"),
                             resultSet.getString("Lokacija"),
                             resultSet.getDate("Datum_osnivanja"),
-                            resultSet.getTimestamp("Pocetak_radnog_vremena"),
-                            resultSet.getTimestamp("Kraj_radnog_vremena")
+                            resultSet.getTime("Pocetak_radnog_vremena"),
+                            resultSet.getTime("Kraj_radnog_vremena")
                     );
                 }
             }
@@ -179,35 +179,42 @@ public class RudnikDAOImpl implements RudnikDAO {
 
     @Override
     public boolean save(Rudnik entity) throws SQLException {
-        if (existsById(entity.getRudnikID())) {
-            return update(entity);
-        } else {
+        // If ID is 0 or negative, it's a new entity - always insert
+        if (entity.getRudnikID() <= 0) {
             return insert(entity);
+        } else {
+            // Check if entity with this ID actually exists
+            if (existsById(entity.getRudnikID())) {
+                return update(entity);
+            } else {
+                return insert(entity);
+            }
         }
     }
 
     private boolean insert(Rudnik entity) throws SQLException {
-        String query = "INSERT INTO Rudnik (RudnikID, Naziv, Lokacija, Datum_osnivanja, " +
-                "Pocetak_radnog_vremena, Kraj_radnog_vremena) VALUES (?, ?, ?, ?, ?, ?)";
+        // Modified INSERT query - don't include RudnikID (let database auto-generate)
+        String query = "INSERT INTO Rudnik (Naziv, Lokacija, Datum_osnivanja, " +
+                "Pocetak_radnog_vremena, Kraj_radnog_vremena) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection connection = ConnectionUtil_HikariCP.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
-            preparedStatement.setInt(1, entity.getRudnikID());
-            preparedStatement.setString(2, entity.getNaziv());
-            preparedStatement.setString(3, entity.getLokacija());
-            preparedStatement.setDate(4, new java.sql.Date(entity.getDatumOsnivanja().getTime()));
+            // Don't set RudnikID - let database auto-increment
+            preparedStatement.setString(1, entity.getNaziv());
+            preparedStatement.setString(2, entity.getLokacija());
+            preparedStatement.setDate(3, new java.sql.Date(entity.getDatumOsnivanja().getTime()));
 
             if (entity.getPocetakRadnogVremena() != null) {
-                preparedStatement.setTimestamp(5, new java.sql.Timestamp(entity.getPocetakRadnogVremena().getTime()));
+                preparedStatement.setTime(4, entity.getPocetakRadnogVremena());
             } else {
-                preparedStatement.setNull(5, java.sql.Types.TIMESTAMP);
+                preparedStatement.setNull(4, java.sql.Types.TIME);
             }
 
             if (entity.getKrajRadnogVremena() != null) {
-                preparedStatement.setTimestamp(6, new java.sql.Timestamp(entity.getKrajRadnogVremena().getTime()));
+                preparedStatement.setTime(5, entity.getKrajRadnogVremena());
             } else {
-                preparedStatement.setNull(6, java.sql.Types.TIMESTAMP);
+                preparedStatement.setNull(5, java.sql.Types.TIME);
             }
 
             int rowsAffected = preparedStatement.executeUpdate();
@@ -419,7 +426,9 @@ public class RudnikDAOImpl implements RudnikDAO {
                 "COUNT(CASE WHEN j.Status = 'Aktivno' THEN j.JalovisteID END) as aktivna_jalovista, " +
                 "COUNT(rl.RadLokID) as ukupno_radnih_lokacija, " +
                 "COUNT(CASE WHEN rl.Status = 'Aktivna' THEN rl.RadLokID END) as aktivnih_lokacija, " +
-                "CASE WHEN i.Povrsina > 0 THEN CAST(COUNT(j.JalovisteID) AS DECIMAL) / i.Povrsina ELSE 0 END as jalovista_density, " +
+                "CASE WHEN COUNT(j.JalovisteID) > 0 THEN " +
+                "    CAST(COUNT(CASE WHEN j.Status = 'Aktivno' THEN j.JalovisteID END) AS DECIMAL) / COUNT(j.JalovisteID) * 100 " +
+                "ELSE 0 END as aktivnost_procenat, " +
                 "COALESCE((" +
                 "  SELECT j2.Tip_materijala " +
                 "  FROM Jaloviste j2 " +
@@ -435,7 +444,7 @@ public class RudnikDAOImpl implements RudnikDAO {
                 "WHERE i.Povrsina >= 200 " +
                 "GROUP BY i.IskopID, i.Naziv, r.Naziv, r.Lokacija, i.Povrsina " +
                 "HAVING COUNT(j.JalovisteID) > 0 " +
-                "ORDER BY jalovista_density DESC, i.Povrsina DESC";
+                "ORDER BY COUNT(j.JalovisteID) DESC, i.Povrsina DESC";
 
         List<IskopAnalysisDTO> results = new ArrayList<>();
 
@@ -454,7 +463,6 @@ public class RudnikDAOImpl implements RudnikDAO {
                         resultSet.getInt("aktivna_jalovista"),
                         resultSet.getInt("ukupno_radnih_lokacija"),
                         resultSet.getInt("aktivnih_lokacija"),
-                        resultSet.getDouble("jalovista_density"),
                         resultSet.getString("dominantni_tip_materijala")
                 );
                 results.add(dto);

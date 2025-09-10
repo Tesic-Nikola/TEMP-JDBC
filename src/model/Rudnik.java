@@ -1,5 +1,6 @@
 package model;
 
+import java.sql.Time;
 import java.util.Date;
 
 public class Rudnik {
@@ -7,16 +8,26 @@ public class Rudnik {
     private String naziv;
     private String lokacija;
     private Date datumOsnivanja;
-    private Date pocetakRadnogVremena;
-    private Date krajRadnogVremena;
+    private Time pocetakRadnogVremena;  // Changed to Time
+    private Time krajRadnogVremena;     // Changed to Time
 
     public Rudnik() {
         super();
     }
 
     public Rudnik(int rudnikID, String naziv, String lokacija, Date datumOsnivanja,
-                  Date pocetakRadnogVremena, Date krajRadnogVremena) {
+                  Time pocetakRadnogVremena, Time krajRadnogVremena) {
         this.rudnikID = rudnikID;
+        this.naziv = naziv;
+        this.lokacija = lokacija;
+        this.datumOsnivanja = datumOsnivanja;
+        this.pocetakRadnogVremena = pocetakRadnogVremena;
+        this.krajRadnogVremena = krajRadnogVremena;
+    }
+
+    // Constructor without ID for new records (auto-increment)
+    public Rudnik(String naziv, String lokacija, Date datumOsnivanja,
+                  Time pocetakRadnogVremena, Time krajRadnogVremena) {
         this.naziv = naziv;
         this.lokacija = lokacija;
         this.datumOsnivanja = datumOsnivanja;
@@ -57,25 +68,25 @@ public class Rudnik {
         this.datumOsnivanja = datumOsnivanja;
     }
 
-    public Date getPocetakRadnogVremena() {
+    public Time getPocetakRadnogVremena() {
         return pocetakRadnogVremena;
     }
 
-    public void setPocetakRadnogVremena(Date pocetakRadnogVremena) {
+    public void setPocetakRadnogVremena(Time pocetakRadnogVremena) {
         this.pocetakRadnogVremena = pocetakRadnogVremena;
     }
 
-    public Date getKrajRadnogVremena() {
+    public Time getKrajRadnogVremena() {
         return krajRadnogVremena;
     }
 
-    public void setKrajRadnogVremena(Date krajRadnogVremena) {
+    public void setKrajRadnogVremena(Time krajRadnogVremena) {
         this.krajRadnogVremena = krajRadnogVremena;
     }
 
     @Override
     public String toString() {
-        return String.format("%-6d %-20.20s %-15.15s %-20.20s %-15.15s %-15.15s",
+        return String.format("%-6d %-20.20s %-15.15s %-20.20s %-10.10s %-10.10s",
                 rudnikID, naziv, lokacija,
                 datumOsnivanja != null ? datumOsnivanja.toString() : "N/A",
                 pocetakRadnogVremena != null ? pocetakRadnogVremena.toString() : "N/A",
@@ -83,8 +94,8 @@ public class Rudnik {
     }
 
     public static String getFormattedHeader() {
-        return String.format("%-6s %-20s %-15s %-20s %-15s %-15s",
-                "ID", "NAZIV", "LOKACIJA", "DATUM OSNIVANJA", "POČETAK RADA", "KRAJ RADA");
+        return String.format("%-6s %-20s %-15s %-20s %-10s %-10s",
+                "ID", "NAZIV", "LOKACIJA", "DATUM OSNIVANJA", "POČETAK", "KRAJ");
     }
 
     @Override

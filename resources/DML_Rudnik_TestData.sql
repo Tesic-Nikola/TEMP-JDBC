@@ -1,20 +1,17 @@
--- DML script for populating PostgreSQL test data
--- Insert test data for Rudnik table
+INSERT INTO Rudnik (Naziv, Lokacija, Datum_osnivanja, Pocetak_radnog_vremena, Kraj_radnog_vremena)
+VALUES ('Rudnik Kolubara', 'Lazarevac', '1952-03-15', '06:00:00', '22:00:00');
 
-INSERT INTO Rudnik (RudnikID, Naziv, Lokacija, Datum_osnivanja, Pocetak_radnog_vremena, Kraj_radnog_vremena)
-VALUES (1, 'Rudnik Kolubara', 'Lazarevac', '1952-03-15', '2024-01-01 06:00:00', '2024-01-01 22:00:00');
+INSERT INTO Rudnik (Naziv, Lokacija, Datum_osnivanja, Pocetak_radnog_vremena, Kraj_radnog_vremena)
+VALUES ('Rudnik Tamnava', 'Ub', '1967-08-22', '05:30:00', '21:30:00');
 
-INSERT INTO Rudnik (RudnikID, Naziv, Lokacija, Datum_osnivanja, Pocetak_radnog_vremena, Kraj_radnog_vremena)
-VALUES (2, 'Rudnik Tamnava', 'Ub', '1967-08-22', '2024-01-01 05:30:00', '2024-01-01 21:30:00');
+INSERT INTO Rudnik (Naziv, Lokacija, Datum_osnivanja, Pocetak_radnog_vremena, Kraj_radnog_vremena)
+VALUES ('Rudnik Kostolac', 'Kostolac', '1975-11-10', '07:00:00', '23:00:00');
 
-INSERT INTO Rudnik (RudnikID, Naziv, Lokacija, Datum_osnivanja, Pocetak_radnog_vremena, Kraj_radnog_vremena)
-VALUES (3, 'Rudnik Kostolac', 'Kostolac', '1975-11-10', '2024-01-01 07:00:00', '2024-01-01 23:00:00');
+INSERT INTO Rudnik (Naziv, Lokacija, Datum_osnivanja, Pocetak_radnog_vremena, Kraj_radnog_vremena)
+VALUES ('Rudnik Djerdap', 'Kladovo', '1980-05-05', '06:30:00', '22:30:00');
 
-INSERT INTO Rudnik (RudnikID, Naziv, Lokacija, Datum_osnivanja, Pocetak_radnog_vremena, Kraj_radnog_vremena)
-VALUES (4, 'Rudnik Djerdap', 'Kladovo', '1980-05-05', '2024-01-01 06:30:00', '2024-01-01 22:30:00');
-
-INSERT INTO Rudnik (RudnikID, Naziv, Lokacija, Datum_osnivanja, Pocetak_radnog_vremena, Kraj_radnog_vremena)
-VALUES (5, 'Rudnik Bor', 'Bor', '1963-07-12', '2024-01-01 05:00:00', '2024-01-01 21:00:00');
+INSERT INTO Rudnik (Naziv, Lokacija, Datum_osnivanja, Pocetak_radnog_vremena, Kraj_radnog_vremena)
+VALUES ('Rudnik Bor', 'Bor', '1963-07-12', '05:00:00', '21:00:00');
 
 -- Insert test data for Iskop table (Povrsina in hectares)
 
@@ -91,7 +88,7 @@ VALUES (8, 'Servisni centar', 'Aktivna', 'Popravka mašina', 'Hemijska izloženo
 INSERT INTO Radna_Lok (RadLokID, Naziv, Status, Aktivnosti, Opasnosti, Iskop_IskopID, Radna_Lok_RadLokID)
 VALUES (9, 'Flotacijski pogon', 'Aktivna', 'Obrada rude', 'Toksični gasovi', 7, NULL);
 
--- Insert test data for Masina table (Kapacitet in KG - how much ore/waste it can transfer)
+-- Insert test data for Masina table (Kapacitet in KG)
 
 INSERT INTO Masina (MasinaID, Rudnik_RudnikID, Naziv, Tip, Status, Godina_proizvodnje, Kapacitet)
 VALUES (1, 1, 'Bager SRS-1200', 'Kontinuirani bager', 'U radu', 2018, 120000);
@@ -109,7 +106,7 @@ INSERT INTO Masina (MasinaID, Rudnik_RudnikID, Naziv, Tip, Status, Godina_proizv
 VALUES (5, 3, 'Hidraulični bager EX-8000', 'Hidraulični bager', 'U radu', 2021, 80000);
 
 INSERT INTO Masina (MasinaID, Rudnik_RudnikID, Naziv, Tip, Status, Godina_proizvodnje, Kapacitet)
-VALUES (6, 3, 'Kamion Komatsu 980E', 'Rudarski kamion', 'Neispravna', 2016, 320000);
+VALUES (6, 3, 'Kamion Komatsu 980E', 'Rudarski kamion', 'Neispravan', 2016, 320000);
 
 INSERT INTO Masina (MasinaID, Rudnik_RudnikID, Naziv, Tip, Status, Godina_proizvodnje, Kapacitet)
 VALUES (7, 4, 'Drobilica K-300', 'Primarna drobilica', 'U radu', 2019, 30000);
@@ -122,52 +119,5 @@ VALUES (9, 5, 'Konvejer KC-2000', 'Transportni konvejer', 'U radu', 2018, 200000
 
 INSERT INTO Masina (MasinaID, Rudnik_RudnikID, Naziv, Tip, Status, Godina_proizvodnje, Kapacitet)
 VALUES (10, 1, 'Kompresori K-500', 'Pneumatski kompresor', 'U radu', 2022, 50000);
-
-COMMIT;
-VALUES (5, 'Pomoćni sektor', 'Aktivna', 'Održavanje opreme', 'Mehanička povreda', 3, 4);
-
-INSERT INTO Radna_Lok (RadLokID, Naziv, Status, Aktivnosti, Opasnosti, Iskop_IskopID, Radna_Lok_RadLokID)
-VALUES (6, 'Odlagalište A', 'Aktivna', 'Odlaganje jalovine', 'Prašina i dim', 4, NULL);
-
-INSERT INTO Radna_Lok (RadLokID, Naziv, Status, Aktivnosti, Opasnosti, Iskop_IskopID, Radna_Lok_RadLokID)
-VALUES (7, 'Kontrolna stanica', 'Aktivna', 'Monitoring rada', 'Niska vidljivost', 5, NULL);
-
-INSERT INTO Radna_Lok (RadLokID, Naziv, Status, Aktivnosti, Opasnosti, Iskop_IskopID, Radna_Lok_RadLokID)
-VALUES (8, 'Servisni centar', 'Aktivna', 'Popravka mašina', 'Hemijska izloženost', 6, NULL);
-
-INSERT INTO Radna_Lok (RadLokID, Naziv, Status, Aktivnosti, Opasnosti, Iskop_IskopID, Radna_Lok_RadLokID)
-VALUES (9, 'Flotacijski pogon', 'Aktivna', 'Obrada rude', 'Toksični gasovi', 7, NULL);
-
--- Insert test data for Masina table
-
-INSERT INTO Masina (MasinaID, Rudnik_RudnikID, Naziv, Tip, Status, Godina_proizvodnje, Kapacitet)
-VALUES (1, 1, 'Bager SRS-1200', 'Kontinuirani bager', 'U radu', 2018, 1200);
-
-INSERT INTO Masina (MasinaID, Rudnik_RudnikID, Naziv, Tip, Status, Godina_proizvodnje, Kapacitet)
-VALUES (2, 1, 'Transporter T-500', 'Transportni sistem', 'U radu', 2019, 500);
-
-INSERT INTO Masina (MasinaID, Rudnik_RudnikID, Naziv, Tip, Status, Godina_proizvodnje, Kapacitet)
-VALUES (3, 2, 'Kamion Volvo FH16', 'Utovarivač', 'Servis', 2020, 40);
-
-INSERT INTO Masina (MasinaID, Rudnik_RudnikID, Naziv, Tip, Status, Godina_proizvodnje, Kapacitet)
-VALUES (4, 2, 'Dozzer CAT D11', 'Dozzer', 'U radu', 2017, 850);
-
-INSERT INTO Masina (MasinaID, Rudnik_RudnikID, Naziv, Tip, Status, Godina_proizvodnje, Kapacitet)
-VALUES (5, 3, 'Hidraulični bager EX-8000', 'Hidraulični bager', 'U radu', 2021, 800);
-
-INSERT INTO Masina (MasinaID, Rudnik_RudnikID, Naziv, Tip, Status, Godina_proizvodnje, Kapacitet)
-VALUES (6, 3, 'Kamion Komatsu 980E', 'Rudarski kamion', 'Neispravna', 2016, 320);
-
-INSERT INTO Masina (MasinaID, Rudnik_RudnikID, Naziv, Tip, Status, Godina_proizvodnje, Kapacitet)
-VALUES (7, 4, 'Drobilica K-300', 'Primarna drobilica', 'U radu', 2019, 300);
-
-INSERT INTO Masina (MasinaID, Rudnik_RudnikID, Naziv, Tip, Status, Godina_proizvodnje, Kapacitet)
-VALUES (8, 5, 'Flotacijska jedinica F-150', 'Flotacijski separator', 'Servis', 2020, 150);
-
-INSERT INTO Masina (MasinaID, Rudnik_RudnikID, Naziv, Tip, Status, Godina_proizvodnje, Kapacitet)
-VALUES (9, 5, 'Konvejer KC-2000', 'Transportni konvejer', 'U radu', 2018, 2000);
-
-INSERT INTO Masina (MasinaID, Rudnik_RudnikID, Naziv, Tip, Status, Godina_proizvodnje, Kapacitet)
-VALUES (10, 1, 'Kompresori K-500', 'Pneumatski kompresor', 'U radu', 2022, 500);
 
 COMMIT;

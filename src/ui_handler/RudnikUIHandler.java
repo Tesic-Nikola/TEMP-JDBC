@@ -1,6 +1,7 @@
 package ui_handler;
 
 import java.sql.SQLException;
+import java.sql.Time;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -19,11 +20,11 @@ public class RudnikUIHandler {
         do {
             System.out.println("\n=== UPRAVLJANJE RUDNICIMA ===");
             System.out.println("1 - Prikaz svih rudnika");
-            System.out.println("2 - Prikaz rudnika po ID-ju");
-            System.out.println("3 - Dodavanje novog rudnika");
-            System.out.println("4 - Ažuriranje rudnika");
-            System.out.println("5 - Brisanje rudnika");
-            System.out.println("6 - Broj rudnika u sistemu");
+            //System.out.println("2 - Prikaz rudnika po ID-ju");
+            System.out.println("2 - Dodavanje novog rudnika");
+            System.out.println("3 - Ažuriranje rudnika");
+            System.out.println("4 - Brisanje rudnika");
+            //System.out.println("6 - Broj rudnika u sistemu");
             System.out.println("X - Povratak na glavni meni");
 
             answer = MainUIHandler.sc.nextLine();
@@ -33,19 +34,13 @@ public class RudnikUIHandler {
                     showAllRudnici();
                     break;
                 case "2":
-                    showRudnikById();
-                    break;
-                case "3":
                     addNewRudnik();
                     break;
-                case "4":
+                case "3":
                     updateRudnik();
                     break;
-                case "5":
+                case "4":
                     deleteRudnik();
-                    break;
-                case "6":
-                    showRudnikCount();
                     break;
                 case "X":
                 case "x":
@@ -71,38 +66,30 @@ public class RudnikUIHandler {
         }
     }
 
-    private void showRudnikById() {
-        try {
-            System.out.print("Unesite ID rudnika: ");
-            int id = Integer.parseInt(MainUIHandler.sc.nextLine());
-
-            Rudnik rudnik = rudnikService.getById(id);
-            if (rudnik != null) {
-                System.out.println("\n=== RUDNIK ===");
-                System.out.println(Rudnik.getFormattedHeader());
-                System.out.println("==================================");
-                System.out.println(rudnik);
-            } else {
-                System.out.println("Rudnik sa ID " + id + " nije pronađen!");
-            }
-        } catch (NumberFormatException e) {
-            System.out.println("Neispravna vrednost za ID!");
-        } catch (SQLException e) {
-            System.out.println("Greška pri pretraživanju rudnika: " + e.getMessage());
-        }
-    }
+//    private void showRudnikById() {
+//        try {
+//            System.out.print("Unesite ID rudnika: ");
+//            int id = Integer.parseInt(MainUIHandler.sc.nextLine());
+//
+//            Rudnik rudnik = rudnikService.getById(id);
+//            if (rudnik != null) {
+//                System.out.println("\n=== RUDNIK ===");
+//                System.out.println(Rudnik.getFormattedHeader());
+//                System.out.println("==================================");
+//                System.out.println(rudnik);
+//            } else {
+//                System.out.println("Rudnik sa ID " + id + " nije pronađen!");
+//            }
+//        } catch (NumberFormatException e) {
+//            System.out.println("Neispravna vrednost za ID!");
+//        } catch (SQLException e) {
+//            System.out.println("Greška pri pretraživanju rudnika: " + e.getMessage());
+//        }
+//    }
 
     private void addNewRudnik() {
         try {
             System.out.println("\n=== DODAVANJE NOVOG RUDNIKA ===");
-
-            System.out.print("ID rudnika: ");
-            int id = Integer.parseInt(MainUIHandler.sc.nextLine());
-
-            if (rudnikService.existsById(id)) {
-                System.out.println("Rudnik sa ID " + id + " već postoji!");
-                return;
-            }
 
             System.out.print("Naziv rudnika: ");
             String naziv = MainUIHandler.sc.nextLine();
@@ -113,35 +100,36 @@ public class RudnikUIHandler {
             System.out.print("Datum osnivanja (dd.MM.yyyy): ");
             Date datumOsnivanja = dateFormat.parse(MainUIHandler.sc.nextLine());
 
-            System.out.print("Početak radnog vremena (dd.MM.yyyy HH:mm) - opciono: ");
+            System.out.print("Početak radnog vremena (HH:mm) - opciono: ");
             String pocetakStr = MainUIHandler.sc.nextLine().trim();
-            Date pocetakRadnogVremena = null;
+            Time pocetakRadnogVremena = null;
             if (!pocetakStr.isEmpty()) {
-                pocetakRadnogVremena = dateTimeFormat.parse(pocetakStr);
+                pocetakRadnogVremena = Time.valueOf(pocetakStr + ":00"); // Add seconds
             }
 
-            System.out.print("Kraj radnog vremena (dd.MM.yyyy HH:mm) - opciono: ");
+            System.out.print("Kraj radnog vremena (HH:mm) - opciono: ");
             String krajStr = MainUIHandler.sc.nextLine().trim();
-            Date krajRadnogVremena = null;
+            Time krajRadnogVremena = null;
             if (!krajStr.isEmpty()) {
-                krajRadnogVremena = dateTimeFormat.parse(krajStr);
+                krajRadnogVremena = Time.valueOf(krajStr + ":00"); // Add seconds
             }
 
-            Rudnik newRudnik = new Rudnik(id, naziv, lokacija, datumOsnivanja,
+            // No manual ID - auto-increment
+            Rudnik newRudnik = new Rudnik(naziv, lokacija, datumOsnivanja,
                     pocetakRadnogVremena, krajRadnogVremena);
 
             if (rudnikService.save(newRudnik)) {
-                System.out.println("Rudnik je uspešno dodat!");
+                System.out.println("✓ Rudnik je uspešno dodat!");
             } else {
-                System.out.println("Greška pri dodavanju rudnika!");
+                System.out.println("✗ Greška pri dodavanju rudnika!");
             }
 
-        } catch (NumberFormatException e) {
-            System.out.println("Neispravna vrednost za ID!");
         } catch (ParseException e) {
-            System.out.println("Neispravna format datuma! Koristite format dd.MM.yyyy ili dd.MM.yyyy HH:mm");
+            System.out.println("Neispravna format datuma/vremena! Koristite format dd.MM.yyyy za datum i HH:mm za vreme");
         } catch (SQLException e) {
             System.out.println("Greška pri dodavanju rudnika: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            System.out.println("Neispravna format vremena! Koristite format HH:mm (npr. 08:30)");
         }
     }
 
@@ -163,6 +151,7 @@ public class RudnikUIHandler {
             System.out.println("\n=== AŽURIRANJE RUDNIKA ===");
             System.out.println("Pritisnite Enter da zadržite trenutnu vrednost");
 
+            // Only allow editing name, location, and working hours
             System.out.print("Novi naziv [" + existingRudnik.getNaziv() + "]: ");
             String naziv = MainUIHandler.sc.nextLine().trim();
             if (naziv.isEmpty()) naziv = existingRudnik.getNaziv();
@@ -171,30 +160,41 @@ public class RudnikUIHandler {
             String lokacija = MainUIHandler.sc.nextLine().trim();
             if (lokacija.isEmpty()) lokacija = existingRudnik.getLokacija();
 
-            System.out.print("Novi datum osnivanja (dd.MM.yyyy) [" +
-                    dateFormat.format(existingRudnik.getDatumOsnivanja()) + "]: ");
-            String datumStr = MainUIHandler.sc.nextLine().trim();
-            Date datumOsnivanja = existingRudnik.getDatumOsnivanja();
-            if (!datumStr.isEmpty()) {
-                datumOsnivanja = dateFormat.parse(datumStr);
+            System.out.print("Novi početak radnog vremena (HH:mm) [" +
+                    (existingRudnik.getPocetakRadnogVremena() != null ?
+                            existingRudnik.getPocetakRadnogVremena().toString().substring(0, 5) : "N/A") + "]: ");
+            String pocetakStr = MainUIHandler.sc.nextLine().trim();
+            Time pocetakRadnogVremena = existingRudnik.getPocetakRadnogVremena();
+            if (!pocetakStr.isEmpty()) {
+                pocetakRadnogVremena = Time.valueOf(pocetakStr + ":00");
             }
 
-            Rudnik updatedRudnik = new Rudnik(id, naziv, lokacija, datumOsnivanja,
-                    existingRudnik.getPocetakRadnogVremena(),
-                    existingRudnik.getKrajRadnogVremena());
+            System.out.print("Novi kraj radnog vremena (HH:mm) [" +
+                    (existingRudnik.getKrajRadnogVremena() != null ?
+                            existingRudnik.getKrajRadnogVremena().toString().substring(0, 5) : "N/A") + "]: ");
+            String krajStr = MainUIHandler.sc.nextLine().trim();
+            Time krajRadnogVremena = existingRudnik.getKrajRadnogVremena();
+            if (!krajStr.isEmpty()) {
+                krajRadnogVremena = Time.valueOf(krajStr + ":00");
+            }
+
+            // Keep same ID and datum osnivanja, only update editable fields
+            Rudnik updatedRudnik = new Rudnik(id, naziv, lokacija,
+                    existingRudnik.getDatumOsnivanja(),  // Keep original founding date
+                    pocetakRadnogVremena, krajRadnogVremena);
 
             if (rudnikService.save(updatedRudnik)) {
-                System.out.println("Rudnik je uspešno ažuriran!");
+                System.out.println("✓ Rudnik je uspešno ažuriran!");
             } else {
-                System.out.println("Greška pri ažuriranju rudnika!");
+                System.out.println("✗ Greška pri ažuriranju rudnika!");
             }
 
         } catch (NumberFormatException e) {
             System.out.println("Neispravna vrednost za ID!");
-        } catch (ParseException e) {
-            System.out.println("Neispravna format datuma! Koristite format dd.MM.yyyy");
         } catch (SQLException e) {
             System.out.println("Greška pri ažuriranju rudnika: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            System.out.println("Neispravna format vremena! Koristite format HH:mm (npr. 08:30)");
         }
     }
 
@@ -233,12 +233,12 @@ public class RudnikUIHandler {
         }
     }
 
-    private void showRudnikCount() {
-        try {
-            int count = rudnikService.count();
-            System.out.println("Ukupan broj rudnika u sistemu: " + count);
-        } catch (SQLException e) {
-            System.out.println("Greška pri brojanju rudnika: " + e.getMessage());
-        }
-    }
+//    private void showRudnikCount() {
+//        try {
+//            int count = rudnikService.count();
+//            System.out.println("Ukupan broj rudnika u sistemu: " + count);
+//        } catch (SQLException e) {
+//            System.out.println("Greška pri brojanju rudnika: " + e.getMessage());
+//        }
+//    }
 }

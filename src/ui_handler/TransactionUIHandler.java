@@ -5,6 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import service.TransactionService;
+import service.RudnikService;          // Add this
+import dao.MasinaDAO;                  // Add this
+import dao.impl.MasinaDAOImpl;         // Add this
+import model.Rudnik;                   // Add this
+import model.Masina;                   // Add this
 
 public class TransactionUIHandler {
 
@@ -48,48 +53,122 @@ public class TransactionUIHandler {
             System.out.println("2. Dodati zapis o održavanju u tabelu Servis");
             System.out.println();
 
-            System.out.print("Unesite ID-jeve mašina za servisiranje (odvojeno zarezom): ");
-            String input = MainUIHandler.sc.nextLine().trim();
+            // Step 1: Show all mines and let user pick
+            RudnikService rudnikService = new RudnikService();
+            MasinaDAO masinaDAO = new MasinaDAOImpl();
 
-            if (input.isEmpty()) {
-                System.out.println("Nije unesen nijedan ID mašine!");
+            List<Rudnik> allMines = rudnikService.getAll();
+
+            System.out.println("=== IZABERITE RUDNIK ===");
+            for (int i = 0; i < allMines.size(); i++) {
+                Rudnik mine = allMines.get(i);
+                System.out.printf("%d - %s (%s)%n", i + 1, mine.getNaziv(), mine.getLokacija());
+            }
+
+            System.out.print("Izaberite broj rudnika: ");
+            int mineChoice = Integer.parseInt(MainUIHandler.sc.nextLine()) - 1;
+
+            if (mineChoice < 0 || mineChoice >= allMines.size()) {
+                System.out.println("Neispravna opcija!");
                 return;
             }
 
-            List<Integer> masinaIds = new ArrayList<>();
-            String[] idStrings = input.split(",");
+            Rudnik selectedMine = allMines.get(mineChoice);
 
-            for (String idStr : idStrings) {
+            // Step 2: Show machines from selected mine
+            List<Masina> machinesInMine = masinaDAO.findByRudnikId(selectedMine.getRudnikID());
+
+            if (machinesInMine.isEmpty()) {
+                System.out.println("Nema mašina u odabranom rudniku!");
+                return;
+            }
+
+            // Filter only machines that are NOT already in service
+            List<Masina> availableMachines = new ArrayList<>();
+            for (Masina machine : machinesInMine) {
+                if (!"Servis".equals(machine.getStatus())) {
+                    availableMachines.add(machine);
+                }
+            }
+
+            if (availableMachines.isEmpty()) {
+                System.out.println("Sve mašine u rudniku '" + selectedMine.getNaziv() + "' su već na servisu!");
+                return;
+            }
+
+            System.out.println("\n=== MAŠINE U RUDNIKU: " + selectedMine.getNaziv() + " ===");
+            System.out.println("(Prikazane su samo mašine koje NISU na servisu)");
+            System.out.println(Masina.getFormattedHeader());
+            System.out.println("=".repeat(120));
+
+            for (int i = 0; i < availableMachines.size(); i++) {
+                System.out.printf("%d - %s%n", i + 1, availableMachines.get(i).toString());
+            }
+
+            System.out.print("\nIzaberite mašine za servisiranje (brojevi odvojeni zarezom): ");
+            String input = MainUIHandler.sc.nextLine().trim();
+
+            if (input.isEmpty()) {
+                System.out.println("Nije odabrana nijedna mašina!");
+                return;
+            }
+
+            List<Integer> selectedMachineIds = new ArrayList<>();
+            String[] choices = input.split(",");
+
+            for (String choice : choices) {
                 try {
-                    int id = Integer.parseInt(idStr.trim());
-                    masinaIds.add(id);
+                    int index = Integer.parseInt(choice.trim()) - 1;
+                    if (index >= 0 && index < availableMachines.size()) {
+                        selectedMachineIds.add(availableMachines.get(index).getMasinaID());
+                    } else {
+                        System.out.println("Neispravna opcija: " + choice);
+                        return;
+                    }
                 } catch (NumberFormatException e) {
-                    System.out.println("Neispravna vrednost za ID: " + idStr);
+                    System.out.println("Neispravna vrednost: " + choice);
                     return;
                 }
             }
 
-            System.out.println("Mašine za servisiranje: " + masinaIds);
-            System.out.print("Da li želite da nastavite? (da/ne): ");
-            String potvrda = MainUIHandler.sc.nextLine();
+            // Step 3: Show maintenance summary
+            System.out.println("\n=== PREGLED SERVISIRANJA ===");
+            System.out.println("Rudnik: " + selectedMine.getNaziv());
+            System.out.println("Broj mašina za servis: " + selectedMachineIds.size());
 
-            if (!potvrda.equalsIgnoreCase("da")) {
-                System.out.println("Transakcija je otkazana.");
+            System.out.println("\nMašine koje će ići na servis:");
+            for (Integer id : selectedMachineIds) {
+                Masina machine = availableMachines.stream()
+                        .filter(m -> m.getMasinaID() == id)
+                        .findFirst().orElse(null);
+                if (machine != null) {
+                    System.out.println("- " + machine.getNaziv() + " (" + machine.getTip() +
+                            ") - trenutno: " + machine.getStatus());
+                }
+            }
+
+            System.out.print("\nPotvrdjujete servisiranje? (da/ne): ");
+            String confirmation = MainUIHandler.sc.nextLine();
+
+            if (!confirmation.equalsIgnoreCase("da")) {
+                System.out.println("Servisiranje je otkazano.");
                 return;
             }
 
-            // Execute transaction
-            boolean success = transactionService.performMachineMaintenanceTransaction(masinaIds);
+            // Step 4: Execute transaction
+            boolean success = transactionService.performMachineMaintenanceTransaction(selectedMachineIds);
 
             if (success) {
-                System.out.println("✓ Transakcija je uspešno izvršena!");
+                System.out.println("✓ Servisiranje je uspešno izvršeno!");
                 System.out.println("- Status mašina je promenjen na 'Servis'");
-                System.out.println("- Dodani su zapisi o održavanju");
-                System.out.println("- Ukupno mašina: " + masinaIds.size());
+                System.out.println("- Dodani su zapisi o održavanju u tabelu Servis");
+                System.out.println("- Ukupno mašina poslato na servis: " + selectedMachineIds.size());
             } else {
-                System.out.println("✗ Transakcija nije uspešno izvršena!");
+                System.out.println("✗ Servisiranje nije uspešno izvršeno!");
             }
 
+        } catch (NumberFormatException e) {
+            System.out.println("Neispravna vrednost!");
         } catch (SQLException e) {
             System.out.println("Greška pri izvršavanju transakcije: " + e.getMessage());
             e.printStackTrace();
@@ -104,85 +183,132 @@ public class TransactionUIHandler {
     private void performMachineTransfer() {
         try {
             System.out.println("\n=== TRANSFER MAŠINA IZMEĐU RUDNIKA ===");
-            System.out.println("Ova transakcija će:");
-            System.out.println("1. Verifikovati da mašine pripadaju izvornom rudniku");
-            System.out.println("2. Promeniti rudnik vlasništvo mašina");
-            System.out.println("3. Pokušati da doda log transfere (ako tabela postoji)");
-            System.out.println();
 
-            System.out.print("Unesite ID izvornog rudnika: ");
-            int fromRudnikId;
-            try {
-                fromRudnikId = Integer.parseInt(MainUIHandler.sc.nextLine().trim());
-            } catch (NumberFormatException e) {
-                System.out.println("Neispravna vrednost za ID rudnika!");
+            // Step 1: Show all mines and let user pick source mine
+            RudnikService rudnikService = new RudnikService();
+            MasinaDAO masinaDAO = new MasinaDAOImpl();  // Use the real DAO
+
+            List<Rudnik> allMines = rudnikService.getAll();
+
+            System.out.println("\n=== IZABERITE IZVORNI RUDNIK ===");
+            for (int i = 0; i < allMines.size(); i++) {
+                Rudnik mine = allMines.get(i);
+                System.out.printf("%d - %s (%s)%n", i + 1, mine.getNaziv(), mine.getLokacija());
+            }
+
+            System.out.print("Izaberite broj izvornog rudnika: ");
+            int sourceChoice = Integer.parseInt(MainUIHandler.sc.nextLine()) - 1;
+
+            if (sourceChoice < 0 || sourceChoice >= allMines.size()) {
+                System.out.println("Neispravna opcija!");
                 return;
             }
 
-            System.out.print("Unesite ID odredišnog rudnika: ");
-            int toRudnikId;
-            try {
-                toRudnikId = Integer.parseInt(MainUIHandler.sc.nextLine().trim());
-            } catch (NumberFormatException e) {
-                System.out.println("Neispravna vrednost za ID rudnika!");
+            Rudnik sourceMine = allMines.get(sourceChoice);
+            int fromRudnikId = sourceMine.getRudnikID();
+
+            // Step 2: Show machines from selected mine using DAO
+            List<Masina> machinesInMine = masinaDAO.findByRudnikId(fromRudnikId);
+
+            if (machinesInMine.isEmpty()) {
+                System.out.println("Nema mašina u odabranom rudniku!");
                 return;
             }
 
-            if (fromRudnikId == toRudnikId) {
-                System.out.println("Izvorni i odredišni rudnik ne mogu biti isti!");
-                return;
+            System.out.println("\n=== MAŠINE U RUDNIKU: " + sourceMine.getNaziv() + " ===");
+            System.out.println(Masina.getFormattedHeader());
+            System.out.println("=".repeat(120));
+
+            for (int i = 0; i < machinesInMine.size(); i++) {
+                System.out.printf("%d - %s%n", i + 1, machinesInMine.get(i).toString());
             }
 
-            System.out.print("Unesite ID-jeve mašina za transfer (odvojeno zarezom): ");
+            System.out.print("Izaberite mašine za transfer (brojevi odvojeni zarezom): ");
             String input = MainUIHandler.sc.nextLine().trim();
 
-            if (input.isEmpty()) {
-                System.out.println("Nije unesen nijedan ID mašine!");
-                return;
-            }
+            List<Integer> selectedMachineIds = new ArrayList<>();
+            String[] choices = input.split(",");
 
-            List<Integer> masinaIds = new ArrayList<>();
-            String[] idStrings = input.split(",");
-
-            for (String idStr : idStrings) {
+            for (String choice : choices) {
                 try {
-                    int id = Integer.parseInt(idStr.trim());
-                    masinaIds.add(id);
+                    int index = Integer.parseInt(choice.trim()) - 1;
+                    if (index >= 0 && index < machinesInMine.size()) {
+                        selectedMachineIds.add(machinesInMine.get(index).getMasinaID());
+                    } else {
+                        System.out.println("Neispravna opcija: " + choice);
+                        return;
+                    }
                 } catch (NumberFormatException e) {
-                    System.out.println("Neispravna vrednost za ID: " + idStr);
+                    System.out.println("Neispravna vrednost: " + choice);
                     return;
                 }
             }
 
-            System.out.println("\n=== PREGLED TRANSFERA ===");
-            System.out.println("Izvorni rudnik ID: " + fromRudnikId);
-            System.out.println("Odredišni rudnik ID: " + toRudnikId);
-            System.out.println("Mašine za transfer: " + masinaIds);
-            System.out.print("Da li želite da nastavite? (da/ne): ");
-            String potvrda = MainUIHandler.sc.nextLine();
+            // Step 3: Show destination mines (excluding source)
+            System.out.println("\n=== IZABERITE ODREDIŠNI RUDNIK ===");
+            List<Rudnik> destinationMines = new ArrayList<>();
 
-            if (!potvrda.equalsIgnoreCase("da")) {
-                System.out.println("Transakcija je otkazana.");
+            for (Rudnik mine : allMines) {
+                if (mine.getRudnikID() != fromRudnikId) {
+                    destinationMines.add(mine);
+                    System.out.printf("%d - %s (%s)%n",
+                            destinationMines.size(), mine.getNaziv(), mine.getLokacija());
+                }
+            }
+
+            System.out.print("Izaberite broj odredišnog rudnika: ");
+            int destChoice = Integer.parseInt(MainUIHandler.sc.nextLine()) - 1;
+
+            if (destChoice < 0 || destChoice >= destinationMines.size()) {
+                System.out.println("Neispravna opcija!");
                 return;
             }
 
-            // Execute transaction
-            boolean success = transactionService.transferMachinesBetweenMines(masinaIds, fromRudnikId, toRudnikId);
+            Rudnik destinationMine = destinationMines.get(destChoice);
+            int toRudnikId = destinationMine.getRudnikID();
 
-            if (success) {
-                System.out.println("✓ Transfer je uspešno izvršen!");
-                System.out.println("- Mašine su prebačene u novi rudnik");
-                System.out.println("- Status je postavljen na 'U radu'");
-                System.out.println("- Ukupno mašina: " + masinaIds.size());
-            } else {
-                System.out.println("✗ Transfer nije uspešno izvršen!");
+            // Step 4: Show transfer summary
+            System.out.println("\n=== PREGLED TRANSFERA ===");
+            System.out.println("Iz rudnika: " + sourceMine.getNaziv());
+            System.out.println("U rudnik: " + destinationMine.getNaziv());
+            System.out.println("Broj mašina: " + selectedMachineIds.size());
+
+            System.out.println("\nMašine za transfer:");
+            for (Integer id : selectedMachineIds) {
+                Masina machine = machinesInMine.stream()
+                        .filter(m -> m.getMasinaID() == id)
+                        .findFirst().orElse(null);
+                if (machine != null) {
+                    System.out.println("- " + machine.getNaziv() + " (" + machine.getTip() + ")");
+                }
             }
 
-        } catch (SQLException e) {
-            System.out.println("Greška pri izvršavanju transfera: " + e.getMessage());
-            e.printStackTrace();
+            System.out.print("\nPotvrdjujete transfer? (da/ne): ");
+            String confirmation = MainUIHandler.sc.nextLine();
+
+            if (!confirmation.equalsIgnoreCase("da")) {
+                System.out.println("Transfer je otkazan.");
+                return;
+            }
+
+            // Step 5: Execute transfer
+            boolean success = transactionService.transferMachinesBetweenMines(
+                    selectedMachineIds, fromRudnikId, toRudnikId);
+
+            if (success) {
+                System.out.println("Transfer je uspešno izvršen!");
+                System.out.println("- Mašine su prebačene iz '" + sourceMine.getNaziv() +
+                        "' u '" + destinationMine.getNaziv() + "'");
+                System.out.println("- Ukupno transferovano: " + selectedMachineIds.size() + " mašina");
+            } else {
+                System.out.println("Transfer nije uspešan!");
+            }
+
+        } catch (NumberFormatException e) {
+            System.out.println("Neispravna vrednost!");
         } catch (Exception e) {
-            System.out.println("Neočekivana greška: " + e.getMessage());
+            System.out.println("Greška pri transferu: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

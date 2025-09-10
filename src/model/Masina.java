@@ -83,13 +83,13 @@ public class Masina {
 
     @Override
     public String toString() {
-        return String.format("%-6d %-6d %-25.25s %-20.20s %-15.15s %-6d %-10s",
+        return String.format("%-8d %-8d %-30.30s %-25.25s %-18.18s %-8d %-12s",
                 masinaID, rudnikID, naziv, tip, status, godinaProizvodnje,
                 kapacitet != null ? kapacitet.toString() : "N/A");
     }
 
     public static String getFormattedHeader() {
-        return String.format("%-6s %-6s %-25s %-20s %-15s %-6s %-10s",
+        return String.format("   %-8s %-8s %-30s %-25s %-18s %-8s %-12s",
                 "ID", "RUD_ID", "NAZIV", "TIP", "STATUS", "GODINA", "KAPACITET");
     }
 

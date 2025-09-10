@@ -2,9 +2,9 @@
   <library name="lib">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/slf4j-api-1.7.21.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/HikariCP-java7-2.4.13.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/ojdbc6.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/slf4j-simple-1.7.21.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/HikariCP-5.0.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/postgresql-42.2.29.jre7.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
