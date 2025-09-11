@@ -62,73 +62,67 @@ public class TransactionService {
             }
         }
     }
-
-    /**
-     * Transaction: Transfer machines from one mine to another and update their work locations
-     * This involves updating Masina table and potentially Transfer_Log table
-     */
-    public boolean transferMachinesBetweenMines(List<Integer> masinaIds, int fromRudnikId, int toRudnikId) throws SQLException {
+    public boolean processInspectionResults(int inspekcijaId, String newResult) throws SQLException {
         try (Connection connection = ConnectionUtil_HikariCP.getConnection()) {
-            connection.setAutoCommit(false); // Start transaction
+            connection.setAutoCommit(false);
 
             try {
-                // Step 1: Verify all machines belong to the source mine
-                String verifyQuery = "SELECT COUNT(*) FROM Masina WHERE MasinaID = ? AND Rudnik_RudnikID = ?";
+                // 1. Update inspection result
+                String updateInspekcijaQuery = "UPDATE Inspekcija SET Rezultat = ?, Datum = CURRENT_DATE WHERE InspekcijaID = ?";
+                int jalovisteId;
 
-                for (Integer masinaId : masinaIds) {
-                    try (PreparedStatement verifyStmt = connection.prepareStatement(verifyQuery)) {
-                        verifyStmt.setInt(1, masinaId);
-                        verifyStmt.setInt(2, fromRudnikId);
+                try (PreparedStatement stmt1 = connection.prepareStatement(updateInspekcijaQuery)) {
+                    stmt1.setString(1, newResult);
+                    stmt1.setInt(2, inspekcijaId);
+                    stmt1.executeUpdate();
+                }
 
-                        try (var resultSet = verifyStmt.executeQuery()) {
-                            if (resultSet.next() && resultSet.getInt(1) == 0) {
-                                throw new SQLException("Machine " + masinaId + " does not belong to mine " + fromRudnikId);
-                            }
+                // Get jaloviste ID for this inspection
+                String getJalovisteQuery = "SELECT Jaloviste_JalovisteID FROM Inspekcija WHERE InspekcijaID = ?";
+                try (PreparedStatement stmt = connection.prepareStatement(getJalovisteQuery)) {
+                    stmt.setInt(1, inspekcijaId);
+                    try (var rs = stmt.executeQuery()) {
+                        if (!rs.next()) {
+                            throw new SQLException("Inspection not found");
                         }
+                        jalovisteId = rs.getInt(1);
                     }
                 }
 
-                // Step 2: Update machine mine assignment
-                String updateMasinaQuery = "UPDATE Masina SET Rudnik_RudnikID = ?, Status = 'U radu' WHERE MasinaID = ?";
+                // 2. Update jaloviste status based on inspection result
+                String newJalovisteStatus;
+                switch (newResult) {
+                    case "Ne zadovoljava":
+                        newJalovisteStatus = "Sanacija";
+                        break;
+                    case "Potrebne mere":
+                        newJalovisteStatus = "Neaktivno";
+                        break;
+                    default: // "Zadovoljava"
+                        newJalovisteStatus = "Aktivno";
+                }
 
-                for (Integer masinaId : masinaIds) {
-                    try (PreparedStatement updateStmt = connection.prepareStatement(updateMasinaQuery)) {
-                        updateStmt.setInt(1, toRudnikId);
-                        updateStmt.setInt(2, masinaId);
+                String updateJalovisteQuery = "UPDATE Jaloviste SET Status = ? WHERE JalovisteID = ?";
+                try (PreparedStatement stmt2 = connection.prepareStatement(updateJalovisteQuery)) {
+                    stmt2.setString(1, newJalovisteStatus);
+                    stmt2.setInt(2, jalovisteId);
+                    stmt2.executeUpdate();
+                }
 
-                        int rowsUpdated = updateStmt.executeUpdate();
-
-                        if (rowsUpdated != 1) {
-                            throw new SQLException("Failed to transfer machine with ID: " + masinaId);
-                        }
+                // 3. If waste site needs cleanup, deactivate related work locations
+                if ("Ne zadovoljava".equals(newResult)) {
+                    String updateRadnaLokQuery = "UPDATE Radna_Lok SET Status = 'Neaktivna' " +
+                            "WHERE Iskop_IskopID = (SELECT Iskop_IskopID FROM Jaloviste WHERE JalovisteID = ?)";
+                    try (PreparedStatement stmt3 = connection.prepareStatement(updateRadnaLokQuery)) {
+                        stmt3.setInt(1, jalovisteId);
+                        stmt3.executeUpdate();
                     }
                 }
 
-                // Step 3: Insert transfer log
-                String insertLogQuery = "INSERT INTO Transfer_Log (MasinaID, From_RudnikID, To_RudnikID, Transfer_Date) " +
-                        "VALUES (?, ?, ?, CURRENT_TIMESTAMP)";
-
-                for (Integer masinaId : masinaIds) {
-                    try (PreparedStatement logStmt = connection.prepareStatement(insertLogQuery)) {
-                        logStmt.setInt(1, masinaId);
-                        logStmt.setInt(2, fromRudnikId);
-                        logStmt.setInt(3, toRudnikId);
-
-                        // This might fail if Transfer_Log table doesn't exist, which is fine for demo
-                        try {
-                            logStmt.executeUpdate();
-                        } catch (SQLException e) {
-                            // Log table doesn't exist, continue without logging
-                            System.out.println("Transfer log table not available, continuing without logging...");
-                        }
-                    }
-                }
-
-                connection.commit(); // Commit transaction
+                connection.commit();
                 return true;
-
             } catch (SQLException e) {
-                connection.rollback(); // Rollback on error
+                connection.rollback();
                 throw e;
             }
         }
