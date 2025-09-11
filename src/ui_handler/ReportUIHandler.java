@@ -230,8 +230,7 @@ public class ReportUIHandler {
                 IskopAnalysisDTO maxWasteSites = analysis.stream()
                         .max((a, b) -> Integer.compare(a.getUkupnoJalovista(), b.getUkupnoJalovista()))
                         .get();
-
-                System.out.println("\n=== EKSTREMNI SLUČAJEVI ===");
+                
                 System.out.printf("Najveća površina: %s (%d ha)%n",
                         maxArea.getNazivIskopa(), maxArea.getPovrsinaHa());
                 System.out.printf("Najviše jalovišta: %s (%d jalovišta)%n",
